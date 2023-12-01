@@ -1,0 +1,9 @@
+grok-pipeline:
+  source:
+    http:
+  processor:
+    - grok:
+        match:
+          log: [ "%{COMMONAPACHELOG}" ]
+  sink:
+    - stdout:

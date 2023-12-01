@@ -1,0 +1,38 @@
+/*
+ * Copyright OpenSearch Contributors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+plugins {
+    id 'java'
+    id 'io.gatling.gradle' version '3.9.5.5'
+}
+
+configurations.all {
+    exclude group: 'io.pebbletemplates', module: 'pebble'
+}
+
+group 'org.opensearch.dataprepper.test.performance'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    gatlingImplementation 'software.amazon.awssdk:auth:2.20.67'
+    implementation 'com.fasterxml.jackson.core:jackson-core'
+    testRuntimeOnly testLibs.junit.engine
+
+    constraints {
+        zinc('org.scala-sbt:io_2.13') {
+            version {
+                require '1.9.7'
+            }
+            because 'Fixes CVE-2023-46122'
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
