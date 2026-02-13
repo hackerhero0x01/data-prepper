@@ -53,12 +53,15 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -117,6 +120,9 @@ public class OTelLogsGrpcServiceTest {
     Timer requestProcessDuration;
 
     @Mock
+    Timer requestParsingDuration;
+
+    @Mock
     OTelProtoCodec.OTelProtoDecoder mockOTelProtoDecoder;
     @Mock
     PluginMetrics mockPluginMetrics;
@@ -137,7 +143,7 @@ public class OTelLogsGrpcServiceTest {
     private String OBSERVED_TIME_KEY;
 
     @BeforeEach
-    public void setup() {
+    public void setup() throws Exception {
         pluginSetting = new PluginSetting("OTelLogsGrpcService", Collections.EMPTY_MAP);
         pluginSetting.setPipelineName("pipeline");
 
@@ -147,6 +153,7 @@ public class OTelLogsGrpcServiceTest {
         when(mockPluginMetrics.counter(OTelLogsGrpcService.SUCCESS_REQUESTS)).thenReturn(successRequestsCounter);
         when(mockPluginMetrics.summary(OTelLogsGrpcService.PAYLOAD_SIZE)).thenReturn(payloadSizeSummary);
         when(mockPluginMetrics.timer(OTelLogsGrpcService.REQUEST_PROCESS_DURATION)).thenReturn(requestProcessDuration);
+        when(mockPluginMetrics.timer(OTelLogsGrpcService.REQUEST_PARSING_DURATION)).thenReturn(requestParsingDuration);
         doAnswer(invocation -> {
             invocation.<Runnable>getArgument(0).run();
             return null;
@@ -227,6 +234,7 @@ public class OTelLogsGrpcServiceTest {
         String file = IOUtils.toString(this.getClass().getResourceAsStream("/testjson/test-log.json"));
         String expected = String.format(file, TIME_KEY, OBSERVED_TIME_KEY);
         JSONAssert.assertEquals(expected, result, false);
+        verify(requestParsingDuration).record(anyLong(), eq(TimeUnit.MILLISECONDS));
     }
 
     @Test
